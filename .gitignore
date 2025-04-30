@@ -9,8 +9,29 @@ jspm_packages/
 .env.test.local
 .env.production.local
 
-# Cursor configuration -- might have ENV variables. Included by default
-# .cursor/mcp.json
+# Task Master specific
+tasks/
+tasks.json
+test-project/
+test-project*/
+scripts/prd.txt
+output.json
+
+# Test files
+tests/
+*.test.js
+test-*.js
+mcp-test.js
+jest.config.js
+
+# Debug files
+*.debug
+init-debug.log
+dev-debug.log
+
+# Coverage directory used by tools like istanbul
+coverage
+*.lcov
 
 # Logs
 logs
@@ -19,10 +40,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
-
-# Coverage directory used by tools like istanbul
-coverage
-*.lcov
 
 # Optional npm cache directory
 .npm
@@ -52,16 +69,6 @@ coverage
 .nuxt
 dist
 
-# Mac files
-.DS_Store
-
-# Debug files
-*.debug
-init-debug.log
-<<<<<<< HEAD
-dev-debug.log
-
-# Added by Claude Task Master
 # Editor directories and files
 .idea
 .vscode
@@ -70,10 +77,6 @@ dev-debug.log
 *.njsproj
 *.sln
 *.sw?
+
 # OS specific
-# Task files
-tasks.json
-tasks/ 
-=======
-dev-debug.log
->>>>>>> a82284a2dbab901922c443888f87f54950c1af61
+.DS_Store
