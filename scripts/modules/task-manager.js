@@ -199,9 +199,9 @@ Your response should be valid JSON only, with no additional explanation or comme
 				}
 			],
 			options: {
-				model: modelConfig?.model || session?.env?.LOCAL_LLM_MODEL || CONFIG.model,
-				max_tokens: modelConfig?.maxTokens || session?.env?.LOCAL_LLM_MAX_TOKENS || CONFIG.maxTokens,
-				temperature: modelConfig?.temperature || session?.env?.LOCAL_LLM_TEMPERATURE || CONFIG.temperature,
+				model: modelConfig?.model || session?.env?.LOCAL_LLM_MODEL || 'qwen3',
+				max_tokens: modelConfig?.maxTokens || session?.env?.LOCAL_LLM_MAX_TOKENS || 40960,
+				temperature: modelConfig?.temperature || session?.env?.LOCAL_LLM_TEMPERATURE || 0.7,
 				stream: true
 			},
 			onToken: (token) => {
