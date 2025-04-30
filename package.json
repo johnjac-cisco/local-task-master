@@ -1,6 +1,6 @@
 {
   "name": "local-task-master",
-  "version": "0.12.3",
+  "version": "0.12.4",
   "description": "A task management system for ambitious AI-driven development that doesn't overwhelm and confuse Cursor.",
   "main": "index.js",
   "type": "module",
@@ -54,7 +54,7 @@
     "helmet": "^8.1.0",
     "inquirer": "^12.5.0",
     "jsonwebtoken": "^9.0.2",
-    "local-task-master": "^0.12.3",
+    "local-task-master": "^0.12.4",
     "lru-cache": "^10.2.0",
     "openai": "^4.96.2",
     "ora": "^8.2.0",
