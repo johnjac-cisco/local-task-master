@@ -1,6 +1,6 @@
 # LOCAL Task Master - Enhanced AI Client Fork [![GitHub stars](https://img.shields.io/github/stars/eyaltoledano/claude-task-master?style=social)](https://github.com/eyaltoledano/claude-task-master/stargazers)
 
-[![CI](https://github.com/eyaltoledano/claude-task-master/actions/workflows/ci.yml/badge.svg)](https://github.com/eyaltoledano/claude-task-master/actions/workflows/ci.yml) [![npm version](https://badge.fury.io/js/task-master-ai.svg)](https://badge.fury.io/js/task-master-ai) [![Discord Follow](https://dcbadge.limes.pink/api/server/https://discord.gg/2ms58QJjqp?style=flat)](https://discord.gg/2ms58QJjqp) [![License: MIT with Commons Clause](https://img.shields.io/badge/license-MIT%20with%20Commons%20Clause-blue.svg)](LICENSE)
+[![CI](https://github.com/eyaltoledano/claude-task-master/actions/workflows/ci.yml/badge.svg)](https://github.com/eyaltoledano/claude-task-master/actions/workflows/ci.yml) [![npm version](https://badge.fury.io/js/local-task-master.svg)](https://badge.fury.io/js/local-task-master) [![Discord Follow](https://dcbadge.limes.pink/api/server/https://discord.gg/2ms58QJjqp?style=flat)](https://discord.gg/2ms58QJjqp) [![License: MIT with Commons Clause](https://img.shields.io/badge/license-MIT%20with%20Commons%20Clause-blue.svg)](LICENSE)
 
 This is an enhanced fork of the original [Task Master](https://github.com/eyaltoledano/claude-task-master) project by [@eyaltoledano](https://x.com/eyaltoledano) & [@RalphEcom](https://x.com/RalphEcom). We extend our sincere thanks to the original authors for their excellent work in creating the foundation for this project.
 
@@ -25,7 +25,7 @@ This fork enhances Task Master with a robust, OpenAI-compatible AI client system
 
 ### Option 1 | MCP (Recommended):
 
-MCP (Model Control Protocol) provides the easiest way to get started with Task Master directly in your editor.
+MCP (Model Control Protocol) provides the easiest way to get started with Local Task Master directly in your editor.
 
 1. **Install and Start Ollama**
 
@@ -45,9 +45,9 @@ ollama serve
 ```json
 {
 	"mcpServers": {
-		"taskmaster-ai": {
+		"taskmaster": {
 			"command": "npx",
-			"args": ["-y", "--package=task-master-ai", "task-master-ai"],
+			"args": ["-y", "--package=local-task-master", "local-task-master"],
 			"env": {
 				"AI_PROVIDER": "ollama",
 				"AI_BASE_URL": "http://localhost:11434",
@@ -70,10 +70,10 @@ ollama serve
 
 3. **Enable the MCP** in your editor
 
-4. **Prompt the AI** to initialize Task Master:
+4. **Prompt the AI** to initialize Local Task Master:
 
 ```
-Can you please initialize taskmaster-ai into my project?
+Can you please initialize taskmaster into my project?
 ```
 
 5. **Use common commands** directly through your AI assistant:
@@ -91,10 +91,10 @@ Can you help me expand task 4?
 
 ```bash
 # Install globally
-npm install -g task-master-ai
+npm install -g local-task-master
 
 # OR install locally within your project
-npm install task-master-ai
+npm install local-task-master
 ```
 
 #### Initialize a new project
@@ -130,7 +130,7 @@ task-master generate
 
 ## Environment Variables
 
-In addition to the standard Task Master environment variables, this fork supports the following AI-related configurations:
+In addition to the standard Local Task Master environment variables, this fork supports the following AI-related configurations:
 
 - **AI Provider Configuration**:
   - `ANTHROPIC_API_KEY`: Your Anthropic API key
@@ -155,8 +155,8 @@ In addition to the standard Task Master environment variables, this fork support
 
 For more detailed information, check out the documentation in the `docs` directory:
 
-- [Configuration Guide](docs/configuration.md) - Set up environment variables and customize Task Master
-- [Tutorial](docs/tutorial.md) - Step-by-step guide to getting started with Task Master
+- [Configuration Guide](docs/configuration.md) - Set up environment variables and customize Local Task Master
+- [Tutorial](docs/tutorial.md) - Step-by-step guide to getting started with Local Task Master
 - [Command Reference](docs/command-reference.md) - Complete list of all available commands
 - [Task Structure](docs/task-structure.md) - Understanding the task format and features
 - [Example Interactions](docs/examples.md) - Common Cursor AI interaction examples
@@ -170,7 +170,7 @@ For more detailed information, check out the documentation in the `docs` directo
 Try running it with Node directly:
 
 ```bash
-node node_modules/claude-task-master/scripts/init.js
+node node_modules/local-task-master/scripts/init.js
 ```
 
 Or clone the repository and run:
@@ -183,19 +183,19 @@ node scripts/init.js
 
 ## Licensing
 
-Task Master is licensed under the MIT License with Commons Clause. This means you can:
+Local Task Master is licensed under the MIT License with Commons Clause. This means you can:
 
 ✅ **Allowed**:
 
-- Use Task Master for any purpose (personal, commercial, academic)
+- Use Local Task Master for any purpose (personal, commercial, academic)
 - Modify the code
 - Distribute copies
-- Create and sell products built using Task Master
+- Create and sell products built using Local Task Master
 
 ❌ **Not Allowed**:
 
-- Sell Task Master itself
-- Offer Task Master as a hosted service
-- Create competing products based on Task Master
+- Sell Local Task Master itself
+- Offer Local Task Master as a hosted service
+- Create competing products based on Local Task Master
 
 See the [LICENSE](LICENSE) file for the complete license text and [licensing details](docs/licensing.md) for more information.

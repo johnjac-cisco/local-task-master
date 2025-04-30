@@ -1,6 +1,6 @@
 # Configuration
 
-Task Master can be configured through environment variables in a `.env` file at the root of your project.
+Local Task Master can be configured through environment variables in a `.env` file at the root of your project.
 
 ## Required Configuration
 

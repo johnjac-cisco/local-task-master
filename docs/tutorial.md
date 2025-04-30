@@ -1,23 +1,23 @@
-# Task Master Tutorial
+# Local Task Master Tutorial
 
-This tutorial will guide you through setting up and using Task Master for AI-driven development.
+This tutorial will guide you through setting up and using Local Task Master for AI-driven development.
 
 ## Initial Setup
 
-There are two ways to set up Task Master: using MCP (recommended) or via npm installation.
+There are two ways to set up Local Task Master: using MCP (recommended) or via npm installation.
 
 ### Option 1: Using MCP (Recommended)
 
-MCP (Model Control Protocol) provides the easiest way to get started with Task Master directly in your editor.
+MCP (Model Control Protocol) provides the easiest way to get started with Local Task Master directly in your editor.
 
 1. **Add the MCP config to your editor** (Cursor recommended, but it works with other text editors):
 
 ```json
 {
 	"mcpServers": {
-		"taskmaster-ai": {
+		"taskmaster": {
 			"command": "npx",
-			"args": ["-y", "--package=task-master-ai", "task-master-ai"],
+			"args": ["-y", "--package=local-task-master", "local-task-master"],
 			"env": {
 				"ANTHROPIC_API_KEY": "YOUR_ANTHROPIC_API_KEY_HERE",
 				"PERPLEXITY_API_KEY": "YOUR_PERPLEXITY_API_KEY_HERE",
@@ -35,10 +35,10 @@ MCP (Model Control Protocol) provides the easiest way to get started with Task M
 
 2. **Enable the MCP** in your editor settings
 
-3. **Prompt the AI** to initialize Task Master:
+3. **Prompt the AI** to initialize Local Task Master:
 
 ```
-Can you please initialize taskmaster-ai into my project?
+Can you please initialize taskmaster into my project?
 ```
 
 The AI will:
@@ -49,7 +49,7 @@ The AI will:
 
 4. Place your PRD document in the `scripts/` directory (e.g., `scripts/prd.txt`)
 
-5. **Use natural language commands** to interact with Task Master:
+5. **Use natural language commands** to interact with Local Task Master:
 
 ```
 Can you parse my PRD at scripts/prd.txt?
@@ -63,10 +63,10 @@ If you prefer to use the command line interface directly:
 
 ```bash
 # Install globally
-npm install -g task-master-ai
+npm install -g local-task-master
 
 # OR install locally within your project
-npm install task-master-ai
+npm install local-task-master
 ```
 
 Initialize a new project:
@@ -83,7 +83,7 @@ This will prompt you for project details and set up a new project with the neces
 
 ## Common Commands
 
-After setting up Task Master, you can use these commands (either via AI prompts or CLI):
+After setting up Local Task Master, you can use these commands (either via AI prompts or CLI):
 
 ```bash
 # Parse a PRD and generate tasks
@@ -101,11 +101,11 @@ task-master generate
 
 ## Setting up Cursor AI Integration
 
-Task Master is designed to work seamlessly with [Cursor AI](https://www.cursor.so/), providing a structured workflow for AI-driven development.
+Local Task Master is designed to work seamlessly with [Cursor AI](https://www.cursor.so/), providing a structured workflow for AI-driven development.
 
 ### Using Cursor with MCP (Recommended)
 
-If you've already set up Task Master with MCP in Cursor, the integration is automatic. You can simply use natural language to interact with Task Master:
+If you've already set up Local Task Master with MCP in Cursor, the integration is automatic. You can simply use natural language to interact with Local Task Master:
 
 ```
 What tasks are available to work on next?
@@ -130,12 +130,12 @@ You can also set up the MCP server in Cursor settings:
 2. Navigate to the MCP section
 3. Click on "Add New MCP Server"
 4. Configure with the following details:
-   - Name: "Task Master"
+   - Name: "Local Task Master"
    - Type: "Command"
-   - Command: "npx -y --package=task-master-ai task-master-ai"
+   - Command: "npx -y --package=local-task-master local-task-master"
 5. Save the settings
 
-Once configured, you can interact with Task Master's task management commands directly through Cursor's interface, providing a more integrated experience.
+Once configured, you can interact with Local Task Master's task management commands directly through Cursor's interface, providing a more integrated experience.
 
 ## Initial Task Generation
 
@@ -307,7 +307,7 @@ task-master expand --id=5 --research
 ### Starting a new project
 
 ```
-I've just initialized a new project with Claude Task Master. I have a PRD at scripts/prd.txt.
+I've just initialized a new project with Claude Local Task Master. I have a PRD at scripts/prd.txt.
 Can you help me parse it and set up the initial tasks?
 ```
 

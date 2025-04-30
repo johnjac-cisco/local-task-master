@@ -1,6 +1,6 @@
 # Task Structure
 
-Tasks in Task Master follow a specific format designed to provide comprehensive information for both humans and AI assistants.
+Tasks in Local Task Master follow a specific format designed to provide comprehensive information for both humans and AI assistants.
 
 ## Task Fields in tasks.json
 

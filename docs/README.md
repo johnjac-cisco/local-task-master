@@ -1,11 +1,11 @@
-# Task Master Documentation
+# Local Task Master Documentation
 
-Welcome to the Task Master documentation. Use the links below to navigate to the information you need:
+Welcome to the Local Task Master documentation. Use the links below to navigate to the information you need:
 
 ## Getting Started
 
-- [Configuration Guide](configuration.md) - Set up environment variables and customize Task Master
-- [Tutorial](tutorial.md) - Step-by-step guide to getting started with Task Master
+- [Configuration Guide](configuration.md) - Set up environment variables and customize Local Task Master
+- [Tutorial](tutorial.md) - Step-by-step guide to getting started with Local Task Master
 
 ## Reference
 

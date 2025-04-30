@@ -612,9 +612,9 @@ function setupMCPConfiguration(targetDir) {
 
 	// New MCP config to be added - references the installed package
 	const newMCPServer = {
-		'task-master-ai': {
+		'taskmaster': {
 			command: 'npx',
-			args: ['-y', 'task-master-mcp'],
+			args: ['-y', '--package=local-task-master', 'local-task-master'],
 			env: {
 				ANTHROPIC_API_KEY: 'YOUR_ANTHROPIC_API_KEY',
 				PERPLEXITY_API_KEY: 'YOUR_PERPLEXITY_API_KEY',
