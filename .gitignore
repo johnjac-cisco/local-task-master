@@ -58,6 +58,7 @@ dist
 # Debug files
 *.debug
 init-debug.log
+<<<<<<< HEAD
 dev-debug.log
 
 # Added by Claude Task Master
@@ -73,3 +74,6 @@ dev-debug.log
 # Task files
 tasks.json
 tasks/ 
+=======
+dev-debug.log
+>>>>>>> a82284a2dbab901922c443888f87f54950c1af61

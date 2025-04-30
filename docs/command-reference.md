@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # Local Task Master Command Reference
+=======
+# Task Master Command Reference
+>>>>>>> a82284a2dbab901922c443888f87f54950c1af61
 
 Here's a comprehensive reference of all available commands:
 
@@ -200,6 +204,10 @@ task-master add-task --prompt="Description" --priority=high
 ## Initialize a Project
 
 ```bash
+<<<<<<< HEAD
 # Initialize a new project with Local Task Master structure
+=======
+# Initialize a new project with Task Master structure
+>>>>>>> a82284a2dbab901922c443888f87f54950c1af61
 task-master init
 ```

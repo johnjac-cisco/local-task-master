@@ -3,6 +3,10 @@ description: Describes the high-level architecture of the Task Master CLI applic
 globs: scripts/modules/*.js
 alwaysApply: false
 ---
+<<<<<<< HEAD
+=======
+
+>>>>>>> a82284a2dbab901922c443888f87f54950c1af61
 # Application Architecture Overview
 
 - **Modular Structure**: The Task Master CLI is built using a modular architecture, with distinct modules responsible for different aspects of the application. This promotes separation of concerns, maintainability, and testability.
@@ -70,6 +74,7 @@ alwaysApply: false
       - `getStatusWithColor(status)`: Returns status string with color formatting.
       - `formatDependenciesWithStatus(dependencies, allTasks, inTable)`: Formats dependency list with status indicators.
 
+<<<<<<< HEAD
   - **[`ai-services.js`](mdc:scripts/modules/ai-services.js): AI Integration**
     - **Purpose**: Provides a flexible, OpenAI-compatible AI client system that supports both cloud providers and local LLM endpoints.
     - **Key Components**:
@@ -119,6 +124,20 @@ alwaysApply: false
       - Tests error handling with simulated failures.
       - Validates configuration validation.
       - Tests streaming responses and token tracking.
+=======
+  - **[`ai-services.js`](mdc:scripts/modules/ai-services.js) (Conceptual): AI Integration**
+    - **Purpose**:  Abstracts interactions with AI models (like Anthropic Claude and Perplexity AI) for various features. *Note: This module might be implicitly implemented within `task-manager.js` and `utils.js` or could be explicitly created for better organization as the project evolves.*
+    - **Responsibilities**:
+      - Handles API calls to AI services.
+      - Manages prompts and parameters for AI requests.
+      - Parses AI responses and extracts relevant information.
+      - Implements logic for task complexity analysis, task expansion, and PRD parsing using AI.
+    - **Potential Functions**:
+      - `getAIResponse(prompt, model, maxTokens, temperature)`: Generic function to interact with AI model.
+      - `analyzeTaskComplexityWithAI(taskDescription)`: Sends task description to AI for complexity analysis.
+      - `expandTaskWithAI(taskDescription, numSubtasks, researchContext)`: Generates subtasks using AI.
+      - `parsePRDWithAI(prdContent)`: Extracts tasks from PRD content using AI.
+>>>>>>> a82284a2dbab901922c443888f87f54950c1af61
 
   - **[`utils.js`](mdc:scripts/modules/utils.js): Utility Functions and Configuration**
     - **Purpose**: Provides reusable utility functions and global configuration settings used across the **CLI application**.
@@ -139,7 +158,11 @@ alwaysApply: false
       - `findCycles(subtaskId, dependencyMap)`: Cycle detection algorithm.
       - `enableSilentMode()` / `disableSilentMode()`: Control console logging output.
 
+<<<<<<< HEAD
   - **[`mcp-server/`](mdc:mcp-server): MCP Server Integration**
+=======
+  - **[`mcp-server/`](mdc:mcp-server/): MCP Server Integration**
+>>>>>>> a82284a2dbab901922c443888f87f54950c1af61
     - **Purpose**: Provides an MCP (Model Context Protocol) interface for Task Master, allowing integration with external tools like Cursor. Uses FastMCP framework.
     - **Responsibilities** (See also: [`mcp.mdc`](mdc:.cursor/rules/mcp.mdc)):
       - Registers Task Master functionalities as tools consumable via MCP.

@@ -1,6 +1,10 @@
 # Task Structure
 
+<<<<<<< HEAD
 Tasks in Local Task Master follow a specific format designed to provide comprehensive information for both humans and AI assistants.
+=======
+Tasks in Task Master follow a specific format designed to provide comprehensive information for both humans and AI assistants.
+>>>>>>> a82284a2dbab901922c443888f87f54950c1af61
 
 ## Task Fields in tasks.json
 

@@ -22,7 +22,20 @@ const DEFAULT_CONFIG = {
     temperature: parseFloat(process.env.OPENAI_TEMPERATURE || '0.7')
   },
   
-  // Local LLM specific settings
+  // Ollama configuration
+  ollama: {
+    enabled: true, // Ollama is always enabled when selected
+    baseURL: process.env.AI_BASE_URL || 'http://localhost:11434/v1',
+    apiKey: 'none', // Ollama doesn't require authentication
+    model: process.env.MODEL || 'qwen3',
+    maxTokens: parseInt(process.env.MAX_TOKENS || '40960'),
+    temperature: parseFloat(process.env.TEMPERATURE || '0.7'),
+    defaultHeaders: {
+      'Content-Type': 'application/json'
+    }
+  },
+
+  // Local LLM specific settings (legacy)
   localLLM: {
     enabled: process.env.USE_LOCAL_LLM === 'true',
     baseURL: process.env.LOCAL_LLM_BASE_URL || 'http://localhost:11434/v1',
@@ -35,7 +48,7 @@ const DEFAULT_CONFIG = {
   // Anthropic (legacy/fallback)
   anthropic: {
     apiKey: process.env.ANTHROPIC_API_KEY,
-    model: process.env.MODEL || 'claude-3-7-sonnet-20250219',
+    model: process.env.MODEL || 'claude-3-opus-20240229',
     maxTokens: parseInt(process.env.MAX_TOKENS || '64000'),
     temperature: parseFloat(process.env.TEMPERATURE || '0.2')
   },
@@ -66,10 +79,17 @@ class ConfigManager {
 
   /**
    * Get configuration for a specific provider
-   * @param {string} provider - Provider name ('openai', 'localLLM', 'anthropic', 'perplexity')
+   * @param {string} provider - Provider name ('openai', 'ollama', 'localLLM', 'anthropic', 'perplexity')
    * @returns {Object} Provider configuration
    */
   getProviderConfig(provider) {
+    // Handle AI_PROVIDER environment variable
+    const envProvider = process.env.AI_PROVIDER;
+    if (envProvider && envProvider.toLowerCase() === 'ollama' && provider !== 'ollama') {
+      log('info', 'Using Ollama as configured in AI_PROVIDER');
+      return this.getProviderConfig('ollama');
+    }
+
     if (!this.config[provider]) {
       throw new Error(`Unknown provider: ${provider}`);
     }
@@ -90,10 +110,18 @@ class ConfigManager {
    * @returns {boolean} True if the provider is available
    */
   isProviderAvailable(provider) {
+    // If AI_PROVIDER is set to ollama, only ollama is available
+    if (process.env.AI_PROVIDER && process.env.AI_PROVIDER.toLowerCase() === 'ollama') {
+      return provider === 'ollama';
+    }
+
     const config = this.config[provider];
     if (!config) return false;
 
     switch (provider) {
+      case 'ollama':
+        // Ollama is available if the base URL is set
+        return Boolean(config.baseURL);
       case 'localLLM':
         return config.enabled;
       case 'anthropic':
@@ -115,14 +143,27 @@ class ConfigManager {
    * @param {Object} options - Selection options
    * @param {boolean} [options.requiresResearch=false] - Whether research capabilities are needed
    * @param {boolean} [options.preferLocal=false] - Whether to prefer local LLM if available
-   * @returns {string} Provider name ('openai', 'localLLM', 'anthropic', 'perplexity')
+   * @returns {string} Provider name ('openai', 'ollama', 'localLLM', 'anthropic', 'perplexity')
    */
   getBestAvailableProvider(options = {}) {
     const { requiresResearch = false, preferLocal = false } = options;
 
+    // If AI_PROVIDER is set to ollama, always use ollama
+    if (process.env.AI_PROVIDER && process.env.AI_PROVIDER.toLowerCase() === 'ollama') {
+      if (this.isProviderAvailable('ollama')) {
+        return 'ollama';
+      }
+      throw new Error('Ollama is configured but not available');
+    }
+
     // If local LLM is preferred and available, use it
-    if (preferLocal && this.isProviderAvailable('localLLM')) {
-      return 'localLLM';
+    if (preferLocal) {
+      if (this.isProviderAvailable('ollama')) {
+        return 'ollama';
+      }
+      if (this.isProviderAvailable('localLLM')) {
+        return 'localLLM';
+      }
     }
 
     // For research tasks, prefer Perplexity
@@ -131,7 +172,7 @@ class ConfigManager {
     }
 
     // Try providers in order of preference
-    const providers = ['openai', 'localLLM', 'anthropic'];
+    const providers = ['openai', 'ollama', 'localLLM', 'anthropic'];
     for (const provider of providers) {
       if (this.isProviderAvailable(provider)) {
         return provider;
@@ -200,12 +241,12 @@ class ConfigManager {
     const availableProviders = Object.keys(this.config)
       .filter(key => key !== 'app')
       .filter(provider => this.isProviderAvailable(provider));
-    
-    log('info', `Available AI providers: ${availableProviders.join(', ')}`);
+
+    log('debug', `Available AI providers: ${availableProviders.join(', ')}`);
   }
 }
 
-// Export a singleton instance
+// Export singleton instance
 export const configManager = new ConfigManager();
 
 // Export the class for testing and custom instances

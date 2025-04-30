@@ -54,6 +54,7 @@
     "helmet": "^8.1.0",
     "inquirer": "^12.5.0",
     "jsonwebtoken": "^9.0.2",
+    "local-task-master": "^0.12.3",
     "lru-cache": "^10.2.0",
     "openai": "^4.96.2",
     "ora": "^8.2.0",

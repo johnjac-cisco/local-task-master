@@ -145,159 +145,89 @@ After your breakdown, create a JSON object containing an array of tasks and a me
 }
 
 Guidelines for creating tasks:
-1. Number tasks from 1 to <num_tasks>${numTasks}</num_tasks>.
-2. Make each task atomic and focused on a single responsibility.
-3. Order tasks logically, considering dependencies and implementation sequence.
-4. Start with setup and core functionality, then move to advanced features.
-5. Provide a clear validation/testing approach for each task.
-6. Set appropriate dependency IDs (tasks can only depend on lower-numbered tasks).
-7. Assign priority based on criticality and dependency order.
-8. Include detailed implementation guidance in the "details" field.
-9. Strictly adhere to any specific requirements for libraries, database schemas, frameworks, tech stacks, or other implementation details mentioned in the PRD.
-10. Fill in gaps left by the PRD while preserving all explicit requirements.
-11. Provide the most direct path to implementation, avoiding over-engineering.
+1. Each task should be self-contained and achievable
+2. Include clear implementation details and test strategies
+3. Consider dependencies carefully - tasks should flow logically
+4. Prioritize based on technical dependencies and business value
+5. Include specific technical details from the PRD where relevant
 
-The final output should be valid JSON with this structure:
+Format your response as a valid JSON object with:
+1. A "tasks" array containing the task objects
+2. A "meta" object with:
+   - projectName: string
+   - description: string
+   - generatedAt: ISO date string
+   - numTasks: number
+   - prdSummary: string
 
-{
-  "tasks": [
-    {
-      "id": 1,
-      "title": "Example Task Title",
-      "description": "Brief description of the task",
-      "status": "pending",
-      "dependencies": [0],
-      "priority": "high",
-      "details": "Detailed implementation guidance",
-      "testStrategy": "Approach for validating this task"
-    },
-    // ... more tasks ...
-  ],
-  "metadata": {
-    "projectName": "PRD Implementation",
-    "totalTasks": <num_tasks>
-    "sourceFile": "<prd_path>${prdPath}</prd_path>",
-    "generatedAt": "YYYY-MM-DD"
-  }
-}
+Here is the PRD to analyze:
 
-Remember to provide comprehensive task details that are LLM-friendly, consider dependencies and maintainability carefully, and keep in mind that you don't have the existing codebase as context. Aim for a balance between detailed guidance and high-level planning.
+${prdContent}`;
 
-Your response should be valid JSON only, with no additional explanation or comments. Do not duplicate or rehash any of the work you did in the prd_breakdown section in your final output.`;
-
-		// Call the AI client with streaming
-		let responseText = '';
-		const stream = await client.createStreamingChatCompletion({
+		// Create chat completion
+		report('Generating tasks from PRD...', 'info');
+		const completion = await client.createChatCompletion({
 			messages: [
 				{
 					role: 'system',
 					content: systemPrompt
-				},
-				{
-					role: 'user',
-					content: `Here's the Product Requirements Document (PRD) to break down into ${numTasks} tasks:\n\n${prdContent}`
 				}
 			],
 			options: {
-				model: modelConfig?.model || session?.env?.LOCAL_LLM_MODEL || 'qwen3',
-				max_tokens: modelConfig?.maxTokens || session?.env?.LOCAL_LLM_MAX_TOKENS || 40960,
-				temperature: modelConfig?.temperature || session?.env?.LOCAL_LLM_TEMPERATURE || 0.7,
-				stream: true
-			},
-			onToken: (token) => {
-				responseText += token;
-				if (reportProgress) {
-					reportProgress({
-						progress: (responseText.length / CONFIG.maxTokens) * 100
-					});
-				}
-				if (mcpLog) {
-					mcpLog.info(`Progress: ${(responseText.length / CONFIG.maxTokens) * 100}%`);
-				}
+				temperature: 0.7,
+				maxTokens: 8192
 			}
 		});
 
-		// Process the response
-		let jsonStart = responseText.indexOf('{');
-		let jsonEnd = responseText.lastIndexOf('}');
+		// Extract and parse the JSON response
+		const jsonContent = completion.choices[0].message.content;
+		let taskData;
 
-		if (jsonStart === -1 || jsonEnd === -1) {
-			throw new Error("Could not find valid JSON in AI's response");
+		try {
+			taskData = JSON.parse(jsonContent);
+		} catch (error) {
+			report('Failed to parse AI response as JSON', 'error');
+			throw new Error(`Invalid JSON response from AI: ${error.message}`);
 		}
 
-		let jsonContent = responseText.substring(jsonStart, jsonEnd + 1);
-		let parsedData = JSON.parse(jsonContent);
-
-		// Validate the structure of the generated tasks
-		if (!parsedData.tasks || !Array.isArray(parsedData.tasks)) {
-			throw new Error("AI's response does not contain a valid tasks array");
+		// Validate the task data
+		if (!taskData.tasks || !Array.isArray(taskData.tasks)) {
+			throw new Error('Invalid task data: missing tasks array');
 		}
 
-		// Ensure we have the correct number of tasks
-		if (parsedData.tasks.length !== numTasks) {
-			report(
-				`Expected ${numTasks} tasks, but received ${parsedData.tasks.length}`,
-				'warn'
-			);
-		}
-
-		// Add metadata if missing
-		if (!parsedData.metadata) {
-			parsedData.metadata = {
-				projectName: 'PRD Implementation',
-				totalTasks: parsedData.tasks.length,
-				sourceFile: prdPath,
-				generatedAt: new Date().toISOString().split('T')[0]
-			};
-		}
-
-		// Update task IDs if appending
+		// Adjust task IDs if appending
 		if (append && lastTaskId > 0) {
-			report(`Updating task IDs to continue from ID ${lastTaskId}`, 'info');
-			parsedData.tasks.forEach((task, index) => {
-				task.id = lastTaskId + index + 1;
-			});
+			taskData.tasks = taskData.tasks.map(task => ({
+				...task,
+				id: task.id + lastTaskId,
+				dependencies: task.dependencies.map(depId => depId + lastTaskId)
+			}));
 		}
 
-		// Merge tasks if appending
-		const tasksData = append
-			? {
-					...existingTasks,
-					tasks: [...existingTasks.tasks, ...parsedData.tasks]
-				}
-			: parsedData;
-
-		// Create the directory if it doesn't exist
-		const tasksDir = path.dirname(tasksPath);
-		if (!fs.existsSync(tasksDir)) {
-			fs.mkdirSync(tasksDir, { recursive: true });
+		// Merge with existing tasks if appending
+		if (append) {
+			taskData.tasks = [...existingTasks.tasks, ...taskData.tasks];
 		}
 
-		// Write the tasks to the file
-		writeJSON(tasksPath, tasksData);
-		const actionVerb = append ? 'appended' : 'generated';
-		report(
-			`Successfully ${actionVerb} ${parsedData.tasks.length} tasks from PRD`,
-			'success'
-		);
-		report(`Tasks saved to: ${tasksPath}`, 'info');
+		// Write the tasks file
+		const outputData = {
+			...taskData,
+			meta: {
+				...taskData.meta,
+				lastUpdated: new Date().toISOString()
+			}
+		};
+
+		writeJSON(tasksPath, outputData);
+		report(`Tasks file written to: ${tasksPath}`, 'info');
 
 		// Generate individual task files
-		if (reportProgress && mcpLog) {
-			// Enable silent mode when being called from MCP server
-			enableSilentMode();
-			await generateTaskFiles(tasksPath, tasksDir);
-			disableSilentMode();
-		} else {
-			await generateTaskFiles(tasksPath, tasksDir);
-		}
+		const tasksDir = path.dirname(tasksPath);
+		generateTaskFiles(tasksPath, tasksDir);
 
-		return tasksData;
+		return outputData;
 	} catch (error) {
 		report(`Error parsing PRD: ${error.message}`, 'error');
-		if (CONFIG.debug) {
-			log('debug', 'Full error:', error);
-		}
 		throw error;
 	}
 }

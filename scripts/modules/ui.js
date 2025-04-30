@@ -28,9 +28,13 @@ const warmGradient = gradient(['#fb8b24', '#e36414', '#9a031e']);
 /**
  * Display a fancy banner for the CLI
  */
+<<<<<<< HEAD
 
 function displayBanner() {
 	console.log("Local");
+=======
+function displayBanner() {
+>>>>>>> a82284a2dbab901922c443888f87f54950c1af61
 	console.clear();
 	const bannerText = figlet.textSync('Task Master', {
 		font: 'Standard',
@@ -42,7 +46,11 @@ function displayBanner() {
 
 	// Add creator credit line below the banner
 	console.log(
+<<<<<<< HEAD
 		chalk.dim('Thanks to ') + chalk.cyan.underline('https://x.com/eyaltoledano')
+=======
+		chalk.dim('by ') + chalk.cyan.underline('https://x.com/eyaltoledano')
+>>>>>>> a82284a2dbab901922c443888f87f54950c1af61
 	);
 
 	// Read version directly from package.json

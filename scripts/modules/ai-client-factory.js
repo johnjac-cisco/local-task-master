@@ -6,6 +6,7 @@
 import { OpenAI } from 'openai';
 import { configManager } from './config-manager.js';
 import { log } from './utils.js';
+import { OpenAICompatibleClient } from './openai-compatible-client.js';
 
 /**
  * Factory class for creating AI client instances
@@ -22,15 +23,15 @@ export class AIClientFactory {
    */
   createClient({ session, mcpLog, modelConfig } = {}) {
     const env = session?.env || process.env;
-    const useLocalLLM = env.USE_LOCAL_LLM === 'true';
+    const provider = env.AI_PROVIDER || 'ollama';
 
     // Create a unique key for this client configuration
     const key = JSON.stringify({
-      useLocalLLM,
-      baseUrl: env.LOCAL_LLM_BASE_URL,
-      model: env.LOCAL_LLM_MODEL,
-      maxTokens: env.LOCAL_LLM_MAX_TOKENS,
-      temperature: env.LOCAL_LLM_TEMPERATURE
+      provider,
+      baseUrl: env.AI_BASE_URL,
+      model: env.MODEL,
+      maxTokens: env.MAX_TOKENS,
+      temperature: env.TEMPERATURE
     });
 
     // Return cached client if it exists
@@ -38,12 +39,17 @@ export class AIClientFactory {
       return this.clients.get(key);
     }
 
-    // Create a new client
+    // Create a new client based on provider
     let client;
-    if (useLocalLLM) {
-      client = this.createLocalLLMClient(env, mcpLog);
-    } else {
-      throw new Error('Only local LLM support is implemented');
+    switch (provider.toLowerCase()) {
+      case 'ollama':
+        client = this.createOllamaClient(env, mcpLog);
+        break;
+      case 'openai':
+        client = this.createOpenAIClient(env, mcpLog);
+        break;
+      default:
+        throw new Error(`Unsupported AI provider: ${provider}`);
     }
 
     // Cache the client
@@ -51,79 +57,42 @@ export class AIClientFactory {
     return client;
   }
 
-  createLocalLLMClient(env, mcpLog) {
-    const baseURL = env.LOCAL_LLM_BASE_URL;
-    const apiKey = env.LOCAL_LLM_API_KEY || 'none';
+  createOllamaClient(env, mcpLog) {
+    const baseURL = env.AI_BASE_URL || 'http://localhost:11434';
+    const apiKey = 'none'; // Ollama doesn't require an API key
 
     if (!baseURL) {
-      throw new Error('LOCAL_LLM_BASE_URL is required when USE_LOCAL_LLM is true');
+      throw new Error('AI_BASE_URL is required for Ollama');
     }
 
-    const client = new OpenAI({
+    // Create OpenAI-compatible client for Ollama
+    return new OpenAICompatibleClient('ollama', {
       apiKey,
       baseURL,
-      dangerouslyAllowBrowser: true
-    });
-
-    // Wrap the client with our streaming interface
-    return {
-      async createStreamingChatCompletion({ messages, options, onToken }) {
-        const { model, max_tokens, temperature } = options;
-
-        try {
-          const stream = await client.chat.completions.create({
-            model: model || 'qwen3',
-            messages,
-            max_tokens: max_tokens || 40960,
-            temperature: temperature || 0.7,
-            stream: true
-          });
-
-          let fullResponse = '';
-          for await (const chunk of stream) {
-            const token = chunk.choices[0]?.delta?.content || '';
-            fullResponse += token;
-            if (onToken) {
-              onToken(token);
-            }
-          }
-
-          return fullResponse;
-        } catch (error) {
-          const errorMessage = `Error calling local LLM: ${error.message}`;
-          if (mcpLog) {
-            mcpLog.error(errorMessage);
-          } else {
-            log('error', errorMessage);
-          }
-          throw error;
-        }
+      model: env.MODEL || 'qwen3',
+      maxTokens: parseInt(env.MAX_TOKENS || '40960', 10),
+      temperature: parseFloat(env.TEMPERATURE || '0.7'),
+      defaultHeaders: {
+        'Content-Type': 'application/json'
       }
-    };
+    });
   }
 
-  /**
-   * Create an AI client instance for a specific provider
-   * @param {string} provider - Provider name ('openai' or 'localLLM')
-   * @param {Object} [options] - Additional client options
-   * @returns {BaseAIClient} AI client instance
-   */
-  static createClientForProvider(provider, options = {}) {
-    try {
-      // Validate provider
-      if (!['openai', 'localLLM'].includes(provider)) {
-        throw new Error(`Unsupported provider: ${provider}`);
-      }
+  createOpenAIClient(env, mcpLog) {
+    const apiKey = env.OPENAI_API_KEY;
+    const baseURL = env.AI_BASE_URL;
 
-      // Create the client instance
-      const client = new OpenAICompatibleClient(provider, options);
-      
-      log('info', `Created AI client for provider: ${provider}`);
-      return client;
-    } catch (error) {
-      log('error', `Failed to create AI client for provider ${provider}: ${error.message}`);
-      throw error;
+    if (!apiKey) {
+      throw new Error('OPENAI_API_KEY is required for OpenAI provider');
     }
+
+    return new OpenAICompatibleClient('openai', {
+      apiKey,
+      baseURL,
+      model: env.MODEL || 'gpt-4',
+      maxTokens: parseInt(env.MAX_TOKENS || '8192', 10),
+      temperature: parseFloat(env.TEMPERATURE || '0.7')
+    });
   }
 
   /**
@@ -131,7 +100,7 @@ export class AIClientFactory {
    * @returns {string} Provider name
    */
   static getDefaultProvider() {
-    return configManager.getConfig('localLLM.enabled') ? 'localLLM' : 'openai';
+    return process.env.AI_PROVIDER || 'ollama';
   }
 
   /**
@@ -140,6 +109,6 @@ export class AIClientFactory {
    * @returns {boolean} Whether the provider is supported
    */
   static isProviderSupported(provider) {
-    return ['openai', 'localLLM'].includes(provider);
+    return ['ollama', 'openai'].includes(provider.toLowerCase());
   }
 } 
