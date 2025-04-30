@@ -3,7 +3,6 @@ description: Describes the high-level architecture of the Task Master CLI applic
 globs: scripts/modules/*.js
 alwaysApply: false
 ---
-
 # Application Architecture Overview
 
 - **Modular Structure**: The Task Master CLI is built using a modular architecture, with distinct modules responsible for different aspects of the application. This promotes separation of concerns, maintainability, and testability.
@@ -71,18 +70,55 @@ alwaysApply: false
       - `getStatusWithColor(status)`: Returns status string with color formatting.
       - `formatDependenciesWithStatus(dependencies, allTasks, inTable)`: Formats dependency list with status indicators.
 
-  - **[`ai-services.js`](mdc:scripts/modules/ai-services.js) (Conceptual): AI Integration**
-    - **Purpose**:  Abstracts interactions with AI models (like Anthropic Claude and Perplexity AI) for various features. *Note: This module might be implicitly implemented within `task-manager.js` and `utils.js` or could be explicitly created for better organization as the project evolves.*
-    - **Responsibilities**:
-      - Handles API calls to AI services.
-      - Manages prompts and parameters for AI requests.
-      - Parses AI responses and extracts relevant information.
-      - Implements logic for task complexity analysis, task expansion, and PRD parsing using AI.
-    - **Potential Functions**:
-      - `getAIResponse(prompt, model, maxTokens, temperature)`: Generic function to interact with AI model.
-      - `analyzeTaskComplexityWithAI(taskDescription)`: Sends task description to AI for complexity analysis.
-      - `expandTaskWithAI(taskDescription, numSubtasks, researchContext)`: Generates subtasks using AI.
-      - `parsePRDWithAI(prdContent)`: Extracts tasks from PRD content using AI.
+  - **[`ai-services.js`](mdc:scripts/modules/ai-services.js): AI Integration**
+    - **Purpose**: Provides a flexible, OpenAI-compatible AI client system that supports both cloud providers and local LLM endpoints.
+    - **Key Components**:
+      - **ConfigManager**: Manages environment variables and configuration for multiple AI providers.
+        - Loads settings from environment variables using dotenv.
+        - Provides methods to retrieve API keys, base URLs, and model names.
+        - Validates required configuration values.
+        - Supports configuration overrides via code.
+        - Maintains default configurations for common providers.
+      - **BaseAIClient**: Abstract base class defining the common interface for all AI clients.
+        - Standardizes method signatures (chat_completion, embeddings, etc.).
+        - Implements proper type hints and parameter validation.
+        - Provides common utility methods and logging hooks.
+        - Defines standard error classes for failure scenarios.
+      - **Client Implementations**:
+        - `OpenAIClient`: Implementation for official OpenAI API.
+        - `LocalLLMClient`: Support for vLLM and other local endpoints.
+        - Additional implementations for OpenAI-compatible APIs (Together AI, Gemini, etc.).
+        - Each client handles provider-specific parameter mapping and validation.
+      - **AIClientFactory**: Factory pattern for client instantiation.
+        - Creates appropriate client based on configuration.
+        - Implements exponential backoff retry mechanism.
+        - Includes circuit breaker pattern to prevent repeated failures.
+        - Provides rate limiting to prevent API quota exhaustion.
+      - **TokenUsageTracker**: Monitors and logs token usage across providers.
+        - Implements token counting for different model types.
+        - Records usage via hooks in client implementations.
+        - Provides usage reporting and visualization tools.
+      - **Streaming Support**:
+        - Implements streaming response handlers for chat completions.
+        - Provides utilities for processing streaming responses.
+        - Supports cancellation of ongoing streaming requests.
+    - **Key Functions**:
+      - `createAIClient(config)`: Factory method to create appropriate client instance.
+      - `chat(prompt, options)`: Unified chat completion interface.
+      - `embed(text, options)`: Unified text embedding interface.
+      - `stream(prompt, callback, options)`: Streaming chat completion interface.
+      - `trackUsage(requestType, tokens)`: Token usage tracking.
+    - **Error Handling**:
+      - Implements detailed error classes for different failure scenarios.
+      - Provides request/response logging for debugging.
+      - Includes retry mechanisms with exponential backoff.
+      - Uses circuit breaker pattern to prevent cascading failures.
+    - **Testing**:
+      - Tests connections to various endpoints (OpenAI, local Ollama, LocalAI).
+      - Verifies authentication for different providers.
+      - Tests error handling with simulated failures.
+      - Validates configuration validation.
+      - Tests streaming responses and token tracking.
 
   - **[`utils.js`](mdc:scripts/modules/utils.js): Utility Functions and Configuration**
     - **Purpose**: Provides reusable utility functions and global configuration settings used across the **CLI application**.
@@ -103,7 +139,7 @@ alwaysApply: false
       - `findCycles(subtaskId, dependencyMap)`: Cycle detection algorithm.
       - `enableSilentMode()` / `disableSilentMode()`: Control console logging output.
 
-  - **[`mcp-server/`](mdc:mcp-server/): MCP Server Integration**
+  - **[`mcp-server/`](mdc:mcp-server): MCP Server Integration**
     - **Purpose**: Provides an MCP (Model Context Protocol) interface for Task Master, allowing integration with external tools like Cursor. Uses FastMCP framework.
     - **Responsibilities** (See also: [`mcp.mdc`](mdc:.cursor/rules/mcp.mdc)):
       - Registers Task Master functionalities as tools consumable via MCP.

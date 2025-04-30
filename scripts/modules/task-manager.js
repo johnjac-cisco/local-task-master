@@ -9,7 +9,6 @@ import chalk from 'chalk';
 import boxen from 'boxen';
 import Table from 'cli-table3';
 import readline from 'readline';
-import { Anthropic } from '@anthropic-ai/sdk';
 import ora from 'ora';
 import inquirer from 'inquirer';
 
@@ -39,52 +38,14 @@ import {
 } from './ui.js';
 
 import {
-	callClaude,
-	generateSubtasks,
-	generateSubtasksWithPerplexity,
-	generateComplexityAnalysisPrompt,
-	getAvailableAIModel,
-	handleClaudeError,
-	_handleAnthropicStream,
-	getConfiguredAnthropicClient,
-	sendChatWithContext,
-	parseTasksFromCompletion,
-	generateTaskDescriptionWithPerplexity,
-	parseSubtasksFromText
-} from './ai-services.js';
-
-import {
 	validateTaskDependencies,
 	validateAndFixDependencies
 } from './dependency-manager.js';
 
-// Initialize Anthropic client
-const anthropic = new Anthropic({
-	apiKey: process.env.ANTHROPIC_API_KEY
-});
+import { AIClientFactory } from './ai-client-factory.js';
 
-// Import perplexity if available
-let perplexity;
-
-try {
-	if (process.env.PERPLEXITY_API_KEY) {
-		// Using the existing approach from ai-services.js
-		const OpenAI = (await import('openai')).default;
-
-		perplexity = new OpenAI({
-			apiKey: process.env.PERPLEXITY_API_KEY,
-			baseURL: 'https://api.perplexity.ai'
-		});
-
-		log(
-			'info',
-			`Initialized Perplexity client with OpenAI compatibility layer`
-		);
-	}
-} catch (error) {
-	log('warn', `Failed to initialize Perplexity client: ${error.message}`);
-	log('warn', 'Research-backed features will not be available');
-}
+// Initialize AI client factory
+const aiClientFactory = new AIClientFactory();
 
 /**
  * Parse a PRD file and generate tasks
@@ -149,21 +110,151 @@ async function parsePRD(
 			}
 		}
 
-		// Call Claude to generate tasks, passing the provided AI client if available
-		const newTasksData = await callClaude(
-			prdContent,
-			prdPath,
-			numTasks,
-			0,
-			{ reportProgress, mcpLog, session },
-			aiClient,
+		// Get or create AI client
+		const client = aiClient || aiClientFactory.createClient({
+			session,
+			mcpLog: mcpLog,
 			modelConfig
-		);
+		});
+
+		// Build the system prompt
+		const systemPrompt = `You are an AI assistant tasked with breaking down a Product Requirements Document (PRD) into a set of sequential development tasks. Your goal is to create exactly <num_tasks>${numTasks}</num_tasks> well-structured, actionable development tasks based on the PRD provided.
+
+First, carefully read and analyze the attached PRD
+
+Before creating the task list, work through the following steps inside <prd_breakdown> tags in your thinking block:
+
+1. List the key components of the PRD
+2. Identify the main features and functionalities described
+3. Note any specific technical requirements or constraints mentioned
+4. Outline a high-level sequence of tasks that would be needed to implement the PRD
+
+Consider dependencies, maintainability, and the fact that you don't have access to any existing codebase. Balance between providing detailed task descriptions and maintaining a high-level perspective.
+
+After your breakdown, create a JSON object containing an array of tasks and a metadata object. Each task should follow this structure:
+
+{
+  "id": number,
+  "title": string,
+  "description": string,
+  "status": "pending",
+  "dependencies": number[] (IDs of tasks this depends on),
+  "priority": "high" | "medium" | "low",
+  "details": string (implementation details),
+  "testStrategy": string (validation approach)
+}
+
+Guidelines for creating tasks:
+1. Number tasks from 1 to <num_tasks>${numTasks}</num_tasks>.
+2. Make each task atomic and focused on a single responsibility.
+3. Order tasks logically, considering dependencies and implementation sequence.
+4. Start with setup and core functionality, then move to advanced features.
+5. Provide a clear validation/testing approach for each task.
+6. Set appropriate dependency IDs (tasks can only depend on lower-numbered tasks).
+7. Assign priority based on criticality and dependency order.
+8. Include detailed implementation guidance in the "details" field.
+9. Strictly adhere to any specific requirements for libraries, database schemas, frameworks, tech stacks, or other implementation details mentioned in the PRD.
+10. Fill in gaps left by the PRD while preserving all explicit requirements.
+11. Provide the most direct path to implementation, avoiding over-engineering.
+
+The final output should be valid JSON with this structure:
+
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Example Task Title",
+      "description": "Brief description of the task",
+      "status": "pending",
+      "dependencies": [0],
+      "priority": "high",
+      "details": "Detailed implementation guidance",
+      "testStrategy": "Approach for validating this task"
+    },
+    // ... more tasks ...
+  ],
+  "metadata": {
+    "projectName": "PRD Implementation",
+    "totalTasks": <num_tasks>
+    "sourceFile": "<prd_path>${prdPath}</prd_path>",
+    "generatedAt": "YYYY-MM-DD"
+  }
+}
+
+Remember to provide comprehensive task details that are LLM-friendly, consider dependencies and maintainability carefully, and keep in mind that you don't have the existing codebase as context. Aim for a balance between detailed guidance and high-level planning.
+
+Your response should be valid JSON only, with no additional explanation or comments. Do not duplicate or rehash any of the work you did in the prd_breakdown section in your final output.`;
+
+		// Call the AI client with streaming
+		let responseText = '';
+		const stream = await client.createStreamingChatCompletion({
+			messages: [
+				{
+					role: 'system',
+					content: systemPrompt
+				},
+				{
+					role: 'user',
+					content: `Here's the Product Requirements Document (PRD) to break down into ${numTasks} tasks:\n\n${prdContent}`
+				}
+			],
+			options: {
+				model: modelConfig?.model || session?.env?.LOCAL_LLM_MODEL || CONFIG.model,
+				max_tokens: modelConfig?.maxTokens || session?.env?.LOCAL_LLM_MAX_TOKENS || CONFIG.maxTokens,
+				temperature: modelConfig?.temperature || session?.env?.LOCAL_LLM_TEMPERATURE || CONFIG.temperature,
+				stream: true
+			},
+			onToken: (token) => {
+				responseText += token;
+				if (reportProgress) {
+					reportProgress({
+						progress: (responseText.length / CONFIG.maxTokens) * 100
+					});
+				}
+				if (mcpLog) {
+					mcpLog.info(`Progress: ${(responseText.length / CONFIG.maxTokens) * 100}%`);
+				}
+			}
+		});
+
+		// Process the response
+		let jsonStart = responseText.indexOf('{');
+		let jsonEnd = responseText.lastIndexOf('}');
+
+		if (jsonStart === -1 || jsonEnd === -1) {
+			throw new Error("Could not find valid JSON in AI's response");
+		}
+
+		let jsonContent = responseText.substring(jsonStart, jsonEnd + 1);
+		let parsedData = JSON.parse(jsonContent);
+
+		// Validate the structure of the generated tasks
+		if (!parsedData.tasks || !Array.isArray(parsedData.tasks)) {
+			throw new Error("AI's response does not contain a valid tasks array");
+		}
+
+		// Ensure we have the correct number of tasks
+		if (parsedData.tasks.length !== numTasks) {
+			report(
+				`Expected ${numTasks} tasks, but received ${parsedData.tasks.length}`,
+				'warn'
+			);
+		}
+
+		// Add metadata if missing
+		if (!parsedData.metadata) {
+			parsedData.metadata = {
+				projectName: 'PRD Implementation',
+				totalTasks: parsedData.tasks.length,
+				sourceFile: prdPath,
+				generatedAt: new Date().toISOString().split('T')[0]
+			};
+		}
 
 		// Update task IDs if appending
 		if (append && lastTaskId > 0) {
 			report(`Updating task IDs to continue from ID ${lastTaskId}`, 'info');
-			newTasksData.tasks.forEach((task, index) => {
+			parsedData.tasks.forEach((task, index) => {
 				task.id = lastTaskId + index + 1;
 			});
 		}
@@ -172,9 +263,9 @@ async function parsePRD(
 		const tasksData = append
 			? {
 					...existingTasks,
-					tasks: [...existingTasks.tasks, ...newTasksData.tasks]
+					tasks: [...existingTasks.tasks, ...parsedData.tasks]
 				}
-			: newTasksData;
+			: parsedData;
 
 		// Create the directory if it doesn't exist
 		const tasksDir = path.dirname(tasksPath);
@@ -186,7 +277,7 @@ async function parsePRD(
 		writeJSON(tasksPath, tasksData);
 		const actionVerb = append ? 'appended' : 'generated';
 		report(
-			`Successfully ${actionVerb} ${newTasksData.tasks.length} tasks from PRD`,
+			`Successfully ${actionVerb} ${parsedData.tasks.length} tasks from PRD`,
 			'success'
 		);
 		report(`Tasks saved to: ${tasksPath}`, 'info');
@@ -201,49 +292,13 @@ async function parsePRD(
 			await generateTaskFiles(tasksPath, tasksDir);
 		}
 
-		// Only show success boxes for text output (CLI)
-		if (outputFormat === 'text') {
-			console.log(
-				boxen(
-					chalk.green(
-						`Successfully ${actionVerb} ${newTasksData.tasks.length} tasks from PRD`
-					),
-					{ padding: 1, borderColor: 'green', borderStyle: 'round' }
-				)
-			);
-
-			console.log(
-				boxen(
-					chalk.white.bold('Next Steps:') +
-						'\n\n' +
-						`${chalk.cyan('1.')} Run ${chalk.yellow('task-master list')} to view all tasks\n` +
-						`${chalk.cyan('2.')} Run ${chalk.yellow('task-master expand --id=<id>')} to break down a task into subtasks`,
-					{
-						padding: 1,
-						borderColor: 'cyan',
-						borderStyle: 'round',
-						margin: { top: 1 }
-					}
-				)
-			);
-		}
-
 		return tasksData;
 	} catch (error) {
 		report(`Error parsing PRD: ${error.message}`, 'error');
-
-		// Only show error UI for text output (CLI)
-		if (outputFormat === 'text') {
-			console.error(chalk.red(`Error: ${error.message}`));
-
-			if (CONFIG.debug) {
-				console.error(error);
-			}
-
-			process.exit(1);
-		} else {
-			throw error; // Re-throw for JSON output
+		if (CONFIG.debug) {
+			log('debug', 'Full error:', error);
 		}
+		throw error;
 	}
 }
 

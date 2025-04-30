@@ -1,18 +1,25 @@
-# Task Master [![GitHub stars](https://img.shields.io/github/stars/eyaltoledano/claude-task-master?style=social)](https://github.com/eyaltoledano/claude-task-master/stargazers)
+# LOCAL Task Master - Enhanced AI Client Fork [![GitHub stars](https://img.shields.io/github/stars/eyaltoledano/claude-task-master?style=social)](https://github.com/eyaltoledano/claude-task-master/stargazers)
 
 [![CI](https://github.com/eyaltoledano/claude-task-master/actions/workflows/ci.yml/badge.svg)](https://github.com/eyaltoledano/claude-task-master/actions/workflows/ci.yml) [![npm version](https://badge.fury.io/js/task-master-ai.svg)](https://badge.fury.io/js/task-master-ai) [![Discord Follow](https://dcbadge.limes.pink/api/server/https://discord.gg/2ms58QJjqp?style=flat)](https://discord.gg/2ms58QJjqp) [![License: MIT with Commons Clause](https://img.shields.io/badge/license-MIT%20with%20Commons%20Clause-blue.svg)](LICENSE)
 
-### By [@eyaltoledano](https://x.com/eyaltoledano) & [@RalphEcom](https://x.com/RalphEcom)
+This is an enhanced fork of the original [Task Master](https://github.com/eyaltoledano/claude-task-master) project by [@eyaltoledano](https://x.com/eyaltoledano) & [@RalphEcom](https://x.com/RalphEcom). We extend our sincere thanks to the original authors for their excellent work in creating the foundation for this project.
 
-[![Twitter Follow](https://img.shields.io/twitter/follow/eyaltoledano?style=flat)](https://x.com/eyaltoledano)
-[![Twitter Follow](https://img.shields.io/twitter/follow/RalphEcom?style=flat)](https://x.com/RalphEcom)
+## What's New in This Fork?
 
-A task management system for AI-driven development with Claude, designed to work seamlessly with Cursor AI.
+This fork enhances Task Master with a robust, OpenAI-compatible AI client system that supports both cloud providers and local LLM endpoints. Key improvements include:
+
+- **Flexible AI Provider Support**: Works with OpenAI, local endpoints (Ollama, LocalAI), and other OpenAI-compatible APIs
+- **Advanced Configuration Management**: Environment-based configuration with support for multiple providers
+- **Robust Error Handling**: Implements retry mechanisms, circuit breakers, and detailed error reporting
+- **Token Usage Tracking**: Built-in monitoring and reporting of token usage across providers
+- **Streaming Support**: Efficient handling of streaming responses with cancellation capabilities
+- **Provider-Agnostic Interface**: Unified API for seamless switching between different AI providers
 
 ## Requirements
 
-- Anthropic API key (Claude API)
-- OpenAI SDK (for Perplexity API integration, optional)
+- Ollama installed locally (for running Qwen and other models)
+- Optional: API keys for cloud providers (Anthropic, OpenAI, etc.)
+- Node.js 18 or higher
 
 ## Quick Start
 
@@ -20,7 +27,20 @@ A task management system for AI-driven development with Claude, designed to work
 
 MCP (Model Control Protocol) provides the easiest way to get started with Task Master directly in your editor.
 
-1. **Add the MCP config to your editor** (Cursor recommended, but it works with other text editors):
+1. **Install and Start Ollama**
+
+```bash
+# Install Ollama (if not already installed)
+# Visit https://ollama.ai for installation instructions
+
+# Pull the Qwen model
+ollama pull qwen3
+
+# Start Ollama in a separate terminal
+ollama serve
+```
+
+2. **Add the MCP config to your editor** (Cursor recommended, but it works with other text editors):
 
 ```json
 {
@@ -29,29 +49,34 @@ MCP (Model Control Protocol) provides the easiest way to get started with Task M
 			"command": "npx",
 			"args": ["-y", "--package=task-master-ai", "task-master-ai"],
 			"env": {
-				"ANTHROPIC_API_KEY": "YOUR_ANTHROPIC_API_KEY_HERE",
-				"PERPLEXITY_API_KEY": "YOUR_PERPLEXITY_API_KEY_HERE",
-				"MODEL": "claude-3-7-sonnet-20250219",
-				"PERPLEXITY_MODEL": "sonar-pro",
-				"MAX_TOKENS": "64000",
-				"TEMPERATURE": "0.2",
+				"AI_PROVIDER": "ollama",
+				"AI_BASE_URL": "http://localhost:11434",
+				"MODEL": "qwen3",
+				"MAX_TOKENS": "40960",
+				"TEMPERATURE": "0.7",
 				"DEFAULT_SUBTASKS": "5",
-				"DEFAULT_PRIORITY": "medium"
+				"DEFAULT_PRIORITY": "medium",
+				"DEBUG": "false",
+				"LOG_LEVEL": "info",
+				"TRACK_USAGE": "true",
+				"MAX_RETRIES": "3",
+				"RETRY_DELAY": "1000",
+				"MAX_CONCURRENT": "4"
 			}
 		}
 	}
 }
 ```
 
-2. **Enable the MCP** in your editor
+3. **Enable the MCP** in your editor
 
-3. **Prompt the AI** to initialize Task Master:
+4. **Prompt the AI** to initialize Task Master:
 
 ```
 Can you please initialize taskmaster-ai into my project?
 ```
 
-4. **Use common commands** directly through your AI assistant:
+5. **Use common commands** directly through your AI assistant:
 
 ```txt
 Can you parse my PRD at scripts/prd.txt?
@@ -103,6 +128,29 @@ task-master next
 task-master generate
 ```
 
+## Environment Variables
+
+In addition to the standard Task Master environment variables, this fork supports the following AI-related configurations:
+
+- **AI Provider Configuration**:
+  - `ANTHROPIC_API_KEY`: Your Anthropic API key
+  - `OPENAI_API_KEY`: Your OpenAI API key
+  - `AI_BASE_URL`: Base URL for custom OpenAI-compatible endpoints
+  - `OPENAI_MODEL`: Default model for OpenAI requests
+  - `LOCAL_MODEL`: Model name for local LLM endpoints
+
+- **Performance Settings**:
+  - `MAX_RETRIES`: Maximum retry attempts for failed API calls
+  - `RETRY_DELAY`: Initial delay between retries (ms)
+  - `MAX_CONCURRENT`: Maximum concurrent API requests
+  - `CIRCUIT_BREAKER_THRESHOLD`: Failure threshold for circuit breaker
+
+- **Monitoring**:
+  - `TRACK_USAGE`: Enable/disable token usage tracking
+  - `USAGE_LOG_PATH`: Path for token usage logs
+  - `DEBUG`: Enable detailed debug logging
+  - `LOG_LEVEL`: Set logging verbosity
+
 ## Documentation
 
 For more detailed information, check out the documentation in the `docs` directory:
@@ -112,6 +160,8 @@ For more detailed information, check out the documentation in the `docs` directo
 - [Command Reference](docs/command-reference.md) - Complete list of all available commands
 - [Task Structure](docs/task-structure.md) - Understanding the task format and features
 - [Example Interactions](docs/examples.md) - Common Cursor AI interaction examples
+- [AI Client Guide](docs/ai-client.md) - Detailed guide for the enhanced AI client system
+- [Provider Integration](docs/providers.md) - Adding support for new AI providers
 
 ## Troubleshooting
 
@@ -130,16 +180,6 @@ git clone https://github.com/eyaltoledano/claude-task-master.git
 cd claude-task-master
 node scripts/init.js
 ```
-
-## Contributors
-
-<a href="https://github.com/eyaltoledano/claude-task-master/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=eyaltoledano/claude-task-master" alt="Task Master project contributors" />
-</a>
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=eyaltoledano/claude-task-master&type=Timeline)](https://www.star-history.com/#eyaltoledano/claude-task-master&Timeline)
 
 ## Licensing
 

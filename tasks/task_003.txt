@@ -1,18 +1,11 @@
 # Task ID: 3
 # Title: Implement Basic Task Operations
-# Status: done
-# Dependencies: 1
+# Status: pending
+# Dependencies: 1, 2
 # Priority: high
-# Description: Create core functionality for managing tasks including listing, creating, updating, and deleting tasks.
+# Description: Create the fundamental CRUD operations for task management through the CLI.
 # Details:
-Implement the following task operations:
-- List tasks with filtering options
-- Create new tasks with required fields
-- Update existing task properties
-- Delete tasks
-- Change task status (pending/done/deferred)
-- Handle dependencies between tasks
-- Manage task priorities
+Implement commands for creating, reading, updating, and deleting tasks. Create 'list' command to display tasks with filtering options. Implement 'status' command to update task status (pending/done/deferred). Add 'add' command to create new tasks manually. Implement 'update' command to modify existing tasks. Create 'delete' command to remove tasks. Implement dependency tracking to prevent circular dependencies and ensure logical task ordering. Add priority management with validation for high/medium/low values. Ensure all commands properly update the tasks.json file.
 
 # Test Strategy:
-Test each operation with valid and invalid inputs. Verify that dependencies are properly tracked and that status changes are reflected correctly in the tasks.json file.
+Test each command with various inputs. Verify tasks.json is updated correctly after each operation. Test dependency validation to ensure no circular dependencies are created. Test priority validation. Verify list filtering works correctly. Test error cases like updating non-existent tasks.

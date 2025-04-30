@@ -55,7 +55,7 @@
 		"inquirer": "^12.5.0",
 		"jsonwebtoken": "^9.0.2",
 		"lru-cache": "^10.2.0",
-		"openai": "^4.89.0",
+		"openai": "^4.96.2",
 		"ora": "^8.2.0",
 		"uuid": "^11.1.0"
 	},
