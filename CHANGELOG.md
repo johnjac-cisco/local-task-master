@@ -1,5 +1,14 @@
 # task-master-ai
 
+## 0.12.4
+
+### Patch Changes
+
+- fix API calls to ollama
+
+- Updated dependencies []:
+  - local-task-master@0.12.4
+
 ## 0.12.1
 
 ### Patch Changes
